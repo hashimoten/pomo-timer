@@ -13,7 +13,7 @@
   --text-muted: #94a3b8;
   --shadow-light: #ffffff;
   --shadow-dark: #a3b1c6;
-  
+
   --ring-work: #38bdf8;
   --ring-break: #22c55e;
   --ring-track: #cbd5e1;
@@ -45,7 +45,8 @@ body {
   @apply w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch;
 }
 
-.timer-card, .history-card {
+.timer-card,
+.history-card {
   @apply w-full max-w-md min-h-[500px] rounded-3xl px-6 sm:px-8 py-8 flex flex-col gap-6 transition-colors duration-300;
   background: var(--bg-element);
   box-shadow: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light);
@@ -64,7 +65,7 @@ body {
 }
 
 .app-header {
-  @apply flex items-center justify-between gap-4;
+  @apply flex items-start justify-between gap-4;
 }
 
 .app-title {
@@ -204,6 +205,7 @@ body {
 .heatmap-level-1 {
   fill: #bfdbfe;
 }
+
 [data-theme="dark"] .heatmap-level-1 {
   fill: #2c5282;
 }
@@ -211,6 +213,7 @@ body {
 .heatmap-level-2 {
   fill: #60a5fa;
 }
+
 [data-theme="dark"] .heatmap-level-2 {
   fill: #3182ce;
 }
@@ -218,6 +221,7 @@ body {
 .heatmap-level-3 {
   fill: #2563eb;
 }
+
 [data-theme="dark"] .heatmap-level-3 {
   fill: #2b6cb0;
 }
@@ -319,4 +323,3 @@ body {
 .toggle-switch[data-checked="true"] .toggle-thumb {
   translate: 24px;
 }
-
