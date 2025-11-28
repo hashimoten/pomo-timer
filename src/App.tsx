@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Play, Pause, RotateCcw, Settings, X } from 'lucide-react';
+import { Play, Pause, RotateCcw, Settings, X, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CalendarHeatmap from 'react-calendar-heatmap';
 
@@ -20,6 +20,8 @@ type AppSettings = {
   workDuration: number; // minutes
   breakDuration: number; // minutes
   theme: 'light' | 'dark';
+  autoStart: boolean;
+  soundType: string;
 };
 
 // Constants
@@ -29,10 +31,58 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 const HISTORY_STORAGE_KEY = 'pomodoro_focus_history';
 const SETTINGS_STORAGE_KEY = 'pomodoro_settings';
 
+const SOUNDS = [
+  { id: 'bell', name: '🔔 Classic Bell' },
+  { id: 'digital', name: '🤖 Digital Beep' },
+  { id: 'bird', name: '🐦 Chirp (Simple)' },
+];
+
 const DEFAULT_SETTINGS: AppSettings = {
   workDuration: 25,
   breakDuration: 5,
   theme: 'light',
+  autoStart: false,
+  soundType: 'bell',
+};
+
+const playNotificationSound = (type: string) => {
+  // Web Audio API context creation
+  const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+  if (!AudioContext) return;
+
+  const ctx = new AudioContext();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  // Sound configuration
+  if (type === 'bell') {
+    // Bell-like sound (sine wave, longer decay)
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.5);
+    osc.start();
+    osc.stop(ctx.currentTime + 1.5);
+  } else if (type === 'digital') {
+    // Digital beep (square wave, short)
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.2);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+  } else {
+    // Default / Chirp (triangle wave)
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(600, ctx.currentTime);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+  }
 };
 
 function formatTime(seconds: number): string {
@@ -186,10 +236,10 @@ function App() {
     });
   };
 
-  const switchMode = useCallback((newMode: TimerMode) => {
+  const switchMode = useCallback((newMode: TimerMode, startImmediately = false) => {
     setMode(newMode);
     setTimeLeft(newMode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60);
-    setTimerState('idle');
+    setTimerState(startImmediately ? 'running' : 'idle');
   }, [settings.workDuration, settings.breakDuration]);
 
   useEffect(() => {
@@ -199,6 +249,9 @@ function App() {
       interval = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
+            // Play notification sound
+            playNotificationSound(settings.soundType);
+
             if (mode === 'work' && sessionStart) {
               const end = new Date();
               const durationMinutes = settings.workDuration;
@@ -206,8 +259,15 @@ function App() {
               setSessionStart(null);
             }
             const newMode = mode === 'work' ? 'break' : 'work';
-            switchMode(newMode);
-            return newMode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
+
+            if (settings.autoStart) {
+              switchMode(newMode, true);
+              // Return the new duration immediately to avoid a flicker or 0 state
+              return newMode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
+            } else {
+              switchMode(newMode, false);
+              return 0;
+            }
           }
           return prev - 1;
         });
@@ -217,7 +277,7 @@ function App() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [timerState, mode, switchMode, sessionStart, settings.workDuration, settings.breakDuration, saveFocusSession]);
+  }, [timerState, mode, switchMode, sessionStart, settings.workDuration, settings.breakDuration, saveFocusSession, settings.autoStart]);
 
   const ringColor = mode === 'work' ? 'var(--ring-work)' : 'var(--ring-break)';
 
@@ -298,6 +358,44 @@ function App() {
                   >
                     <span className="toggle-thumb" />
                   </button>
+                </div>
+
+                {/* Auto-start Toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="setting-label">Auto-start Sessions</span>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, autoStart: !prev.autoStart }))}
+                    className="toggle-switch"
+                    data-checked={settings.autoStart}
+                  >
+                    <span className="toggle-thumb" />
+                  </button>
+                </div>
+
+                {/* Sound Selection */}
+                <div className="setting-row">
+                  <label className="setting-label">Notification Sound</label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={settings.soundType}
+                      onChange={(e) => setSettings(prev => ({ ...prev, soundType: e.target.value }))}
+                      className="setting-input appearance-none flex-1"
+                    >
+                      {SOUNDS.map(sound => (
+                        <option key={sound.id} value={sound.id}>
+                          {sound.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => playNotificationSound(settings.soundType)}
+                      className="p-2 rounded-xl text-[#7a8ba3] hover:text-[#4A5568] transition-colors"
+                      style={{ background: 'var(--bg-element)', boxShadow: '3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light)' }}
+                      title="Preview Sound"
+                    >
+                      <Volume2 size={20} />
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
