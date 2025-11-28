@@ -311,7 +311,7 @@ function App() {
         <div className="timer-column-inner">
           <div className="app-header">
             <div className="flex flex-col gap-1">
-              <h1 className="app-title">Pomodoro</h1>
+              <h1 className="app-title">My-Pomodoro</h1>
               <span className="app-badge">Focused Sessions</span>
             </div>
 
