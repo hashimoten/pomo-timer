@@ -92,7 +92,6 @@ function App() {
     }
   });
 
-  const [showHistory, setShowHistory] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('General');
 
   // Derived State
@@ -311,7 +310,7 @@ function App() {
         <div className="timer-column-inner">
           <div className="app-header">
             <div className="flex flex-col gap-1">
-              <h1 className="app-title">My-Pomodoro</h1>
+              <h1 className="app-title">Pomodoro</h1>
               <span className="app-badge">Focused Sessions</span>
             </div>
 
@@ -475,62 +474,7 @@ function App() {
             <span>{totalFocusMinutes} min</span>
           </div>
 
-          {/* Mobile: toggleable history via button */}
-          <div className="mt-3 md:hidden flex justify-end">
-            <button
-              type="button"
-              className="btn btn-secondary text-xs px-4 py-2"
-              onClick={() => setShowHistory(prev => !prev)}
-            >
-              {showHistory ? 'Hide history' : 'History'}
-            </button>
-          </div>
-
-          {showHistory && (
-            <div className="history-panel mt-4 md:hidden">
-              {/* Heatmap: always visible */}
-              <div className="mb-4">
-                <CalendarHeatmap
-                  startDate={new Date(new Date().setMonth(new Date().getMonth() - 3))}
-                  endDate={new Date()}
-                  values={heatmapValues}
-                  classForValue={(value: { date?: string | Date; count?: number } | undefined) => {
-                    if (!value || !value.count) return 'heatmap-empty';
-                    if (value.count <= 25) return 'heatmap-level-1';
-                    if (value.count <= 50) return 'heatmap-level-2';
-                    return 'heatmap-level-3';
-                  }}
-                  tooltipDataAttrs={(value: { date?: string | Date; count?: number } | undefined) => {
-                    if (!value || !value.date) return {};
-                    const label = `${value.date}: ${value.count ?? 0} min`;
-                    return { title: label };
-                  }}
-                />
-              </div>
-
-              {history.length === 0 ? (
-                <div className="history-empty">No completed focus sessions yet.</div>
-              ) : (
-                <ul className="history-list">
-                  {history.map(item => (
-                    <li key={item.id} className="history-item">
-                      <div className="history-row">
-                        <span className="history-date">{item.date}</span>
-                        <span className="history-minutes">{item.minutes} min</span>
-                      </div>
-                      <div className="flex items-center justify-between history-range">
-                        <span>{item.range}</span>
-                        <span className="text-[10px] text-[#94a3b8]">{item.category}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {/* Desktop: always show history, no toggle button */}
-          <div className="history-panel mt-4 hidden md:block">
+          <div className="history-panel mt-4">
             {/* Heatmap: always visible */}
             <div className="mb-4">
               <CalendarHeatmap
