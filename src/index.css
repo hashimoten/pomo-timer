@@ -1,0 +1,322 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light Mode (Default) */
+  --bg-main: #E0E5EC;
+  --bg-element: #E0E5EC;
+  --text-primary: #4A5568;
+  --text-secondary: #7a8ba3;
+  --text-muted: #94a3b8;
+  --shadow-light: #ffffff;
+  --shadow-dark: #a3b1c6;
+  
+  --ring-work: #38bdf8;
+  --ring-break: #22c55e;
+  --ring-track: #cbd5e1;
+}
+
+[data-theme="dark"] {
+  /* Dark Mode */
+  --bg-main: #2D3748;
+  --bg-element: #2D3748;
+  --text-primary: #E2E8F0;
+  --text-secondary: #A0AEC0;
+  --text-muted: #718096;
+  --shadow-light: #3A465E;
+  --shadow-dark: #1A202C;
+
+  --ring-work: #63b3ed;
+  --ring-break: #48bb78;
+  --ring-track: #4A5568;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  @apply min-h-screen flex items-center justify-center px-6 py-10 sm:px-10 sm:py-12 lg:px-16 lg:py-16 antialiased transition-colors duration-300;
+}
+
+.layout-main {
+  @apply w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch;
+}
+
+.timer-card, .history-card {
+  @apply w-full max-w-md min-h-[500px] rounded-3xl px-6 sm:px-8 py-8 flex flex-col gap-6 transition-colors duration-300;
+  background: var(--bg-element);
+  box-shadow: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light);
+}
+
+.history-card {
+  @apply gap-0;
+}
+
+.timer-column-inner {
+  @apply flex flex-col gap-6;
+}
+
+.analytics-shell {
+  @apply w-full rounded-3xl p-4 sm:p-6 flex flex-col gap-4;
+}
+
+.app-header {
+  @apply flex items-center justify-between gap-4;
+}
+
+.app-title {
+  @apply text-xl sm:text-2xl font-semibold tracking-[0.16em] uppercase;
+  color: var(--text-primary);
+}
+
+.app-badge {
+  @apply text-xs font-medium px-3 py-1 rounded-full tracking-[0.14em] uppercase transition-colors duration-300;
+  color: var(--text-secondary);
+  background: var(--bg-element);
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+}
+
+.mode-toggle {
+  @apply inline-flex items-center gap-1 rounded-full p-1 text-xs font-medium transition-colors duration-300;
+  background: var(--bg-element);
+  box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+}
+
+.mode-pill {
+  @apply px-3 py-1 rounded-full transition-all duration-200 text-opacity-60;
+  color: var(--text-secondary);
+}
+
+.mode-pill--active {
+  @apply text-opacity-100;
+  color: var(--text-primary);
+  background: var(--bg-element);
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+}
+
+.timer-shell {
+  @apply flex flex-col items-center gap-6;
+}
+
+.timer-ring {
+  @apply rounded-full p-6 transition-colors duration-300;
+  background: var(--bg-element);
+  box-shadow: inset 8px 8px 14px var(--shadow-dark), inset -8px -8px 14px var(--shadow-light);
+}
+
+.timer-caption {
+  @apply text-xs font-medium tracking-[0.22em] uppercase;
+  color: var(--text-muted);
+}
+
+.timer-time {
+  @apply w-full text-center px-4 text-4xl sm:text-5xl font-semibold tracking-[0.18em];
+  color: var(--text-primary);
+}
+
+.timer-subcopy {
+  @apply text-sm transition-colors duration-300;
+  color: var(--text-secondary);
+}
+
+.category-bar {
+  @apply text-xs;
+  color: var(--text-primary);
+}
+
+.category-pill {
+  @apply px-3 py-1 rounded-full transition-all duration-200;
+  background: var(--bg-element);
+  box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+  color: var(--text-secondary);
+}
+
+.category-pill--active {
+  @apply font-medium;
+  background: var(--bg-element);
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+  color: var(--text-primary);
+}
+
+.history-panel {
+  @apply w-full mt-2 text-xs;
+  color: var(--text-primary);
+}
+
+.history-empty {
+  @apply px-4 py-3 rounded-2xl text-center transition-colors duration-300;
+  color: var(--text-secondary);
+  background: var(--bg-element);
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+}
+
+.history-list {
+  @apply flex flex-col gap-2 max-h-[300px] overflow-y-auto;
+}
+
+.history-item {
+  @apply px-4 py-3 rounded-2xl transition-colors duration-300;
+  background: var(--bg-element);
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+}
+
+.history-row {
+  @apply flex items-center justify-between mb-1;
+}
+
+.history-date {
+  @apply font-medium;
+}
+
+.history-minutes {
+  @apply font-semibold;
+  color: var(--text-primary);
+}
+
+.history-range {
+  @apply text-[11px];
+  color: var(--text-secondary);
+}
+
+/* Heatmap (react-calendar-heatmap) */
+.react-calendar-heatmap {
+  @apply w-full text-[8px];
+}
+
+.react-calendar-heatmap .react-calendar-heatmap-month-label,
+.react-calendar-heatmap .react-calendar-heatmap-weekday-label {
+  @apply text-[9px];
+  fill: var(--text-muted);
+}
+
+.react-calendar-heatmap .react-calendar-heatmap-day {
+  @apply rounded-md transition-colors duration-300;
+  stroke: none;
+}
+
+.heatmap-empty {
+  fill: var(--ring-track);
+}
+
+.heatmap-level-1 {
+  fill: #bfdbfe;
+}
+[data-theme="dark"] .heatmap-level-1 {
+  fill: #2c5282;
+}
+
+.heatmap-level-2 {
+  fill: #60a5fa;
+}
+[data-theme="dark"] .heatmap-level-2 {
+  fill: #3182ce;
+}
+
+.heatmap-level-3 {
+  fill: #2563eb;
+}
+[data-theme="dark"] .heatmap-level-3 {
+  fill: #2b6cb0;
+}
+
+.react-calendar-heatmap .react-calendar-heatmap-day:hover {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl text-sm font-medium tracking-wide transition-all duration-200 focus-visible:outline-none;
+  background: var(--bg-element);
+  box-shadow: 7px 7px 14px var(--shadow-dark), -7px -7px 14px var(--shadow-light);
+  color: var(--text-primary);
+}
+
+.btn-primary {
+  @apply text-opacity-100;
+}
+
+.btn-secondary {
+  @apply text-opacity-80;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: inset 6px 6px 10px var(--shadow-dark), inset -6px -6px 10px var(--shadow-light);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4;
+}
+
+.modal-content {
+  @apply w-full max-w-sm rounded-3xl p-6 sm:p-8 flex flex-col gap-6 relative;
+  background: var(--bg-element);
+  box-shadow: 20px 20px 40px var(--shadow-dark), -20px -20px 40px var(--shadow-light);
+  color: var(--text-primary);
+}
+
+.modal-header {
+  @apply flex items-center justify-between;
+}
+
+.modal-title {
+  @apply text-lg font-semibold tracking-wide uppercase;
+  color: var(--text-primary);
+}
+
+.modal-close-btn {
+  @apply p-2 rounded-full transition-all duration-200;
+  background: var(--bg-element);
+  box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+  color: var(--text-secondary);
+}
+
+.modal-close-btn:active {
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+}
+
+.setting-row {
+  @apply flex flex-col gap-2;
+}
+
+.setting-label {
+  @apply text-sm font-medium;
+  color: var(--text-secondary);
+}
+
+.setting-input {
+  @apply w-full px-4 py-2 rounded-xl outline-none transition-all duration-200;
+  background: var(--bg-element);
+  color: var(--text-primary);
+  box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none;
+  background: var(--bg-element);
+  box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+}
+
+.toggle-switch[data-checked="true"] {
+  @apply bg-blue-500;
+  box-shadow: none;
+}
+
+.toggle-thumb {
+  @apply inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm;
+  translate: 4px;
+}
+
+.toggle-switch[data-checked="true"] .toggle-thumb {
+  translate: 24px;
+}
+
