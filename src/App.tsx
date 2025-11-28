@@ -404,9 +404,18 @@ function App() {
       </AnimatePresence>
 
       {/* Left: timer card */}
-      <div className="timer-card">
+      <div className="timer-card relative">
+        {/* Settings Button (Absolute Position) */}
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="absolute top-6 right-6 p-2 rounded-full text-[#7a8ba3] hover:text-[#4A5568] transition-colors z-10"
+          style={{ background: 'var(--bg-element)', boxShadow: '5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light)' }}
+        >
+          <Settings size={20} />
+        </button>
+
         <div className="timer-column-inner">
-          <div className="app-header">
+          <div className="app-header pr-12">
             <div className="flex flex-col gap-1">
               <h1 className="app-title">Pomodoro</h1>
               <span className="app-badge">Focused Sessions</span>
@@ -432,14 +441,6 @@ function App() {
                   Break
                 </button>
               </motion.div>
-
-              <button
-                onClick={() => setIsSettingsOpen(true)}
-                className="p-2 rounded-full text-[#7a8ba3] hover:text-[#4A5568] transition-colors"
-                style={{ background: 'var(--bg-element)', boxShadow: '5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light)' }}
-              >
-                <Settings size={20} />
-              </button>
             </div>
           </div>
 
