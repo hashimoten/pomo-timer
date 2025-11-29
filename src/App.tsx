@@ -21,45 +21,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   soundType: 'bell',
 };
 
-const playNotificationSound = (type: string) => {
-  // Web Audio API context creation
-  const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-  if (!AudioContext) return;
 
-  const ctx = new AudioContext();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  // Sound configuration
-  if (type === 'bell') {
-    // Bell-like sound (sine wave, longer decay)
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.5);
-    osc.start();
-    osc.stop(ctx.currentTime + 1.5);
-  } else if (type === 'digital') {
-    // Digital beep (square wave, short)
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(1200, ctx.currentTime);
-    gain.gain.setValueAtTime(0.05, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.2);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.2);
-  } else {
-    // Default / Chirp (triangle wave)
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(600, ctx.currentTime);
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-  }
-};
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -86,6 +48,57 @@ function App() {
   const [mode, setMode] = useState<TimerMode>('work');
   const [sessionStart, setSessionStart] = useState<Date | null>(null);
   const [completedSessions, setCompletedSessions] = useState(0);
+
+  // Audio Context Ref
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const playNotificationSound = useCallback(async (type: string) => {
+    // Web Audio API context creation
+    if (!audioContextRef.current) {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      audioContextRef.current = new AudioContext();
+    }
+    const ctx = audioContextRef.current;
+
+    // Resume if suspended (browser autoplay policy)
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    // Sound configuration
+    if (type === 'bell') {
+      // Bell-like sound (sine wave, longer decay)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.5);
+      osc.start();
+      osc.stop(ctx.currentTime + 1.5);
+    } else if (type === 'digital') {
+      // Digital beep (square wave, short)
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1200, ctx.currentTime);
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.2);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    } else {
+      // Default / Chirp (triangle wave)
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    }
+  }, []);
 
   // History State
   const [history, setHistory] = useState<FocusSession[]>(() => {
@@ -124,19 +137,6 @@ function App() {
   // Derived State
   const currentTotalTime = useMemo(() => {
     if (mode === 'work') return settings.workDuration * 60;
-    // Check if it's a long break
-    // Logic: If we just finished a work session that made the count a multiple of sessionsUntilLongBreak,
-    // then the NEXT break is long.
-    // However, 'mode' is already 'break'. We need to know if THIS break is long.
-    // We can rely on how we switched mode.
-    // Simplified: We set the duration when we switch mode.
-    // So we don't need to calculate it here based on count, we should trust timeLeft or a stored duration.
-    // But for the progress bar, we need the total time of the CURRENT session.
-    // Let's store the current session duration in a ref or state to be safe, OR recalculate it.
-    // For now, let's assume standard break unless we track it.
-    // Actually, we can check if (completedSessions % settings.sessionsUntilLongBreak === 0) AND mode === 'break'.
-    // But completedSessions increments AFTER work.
-    // So if we have 4 sessions, and we are in break, it means we just finished 4th. So yes.
     if (completedSessions > 0 && completedSessions % settings.sessionsUntilLongBreak === 0) {
       return settings.longBreakDuration * 60;
     }
@@ -260,6 +260,17 @@ function App() {
   }, [mode, timeLeft, sessionStart, saveFocusSession, settings, completedSessions]);
 
   const toggleTimer = useCallback(() => {
+    // Initialize/Resume AudioContext on user interaction
+    if (!audioContextRef.current) {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContext) {
+        audioContextRef.current = new AudioContext();
+      }
+    }
+    if (audioContextRef.current?.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
+
     setTimerState(prev => {
       if (prev === 'running') return 'paused';
       if (prev === 'idle' && timeLeft === currentTotalTime) {
@@ -369,7 +380,7 @@ function App() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [timerState, mode, sessionStart, settings, saveFocusSession, completedSessions]);
+  }, [timerState, mode, sessionStart, settings, saveFocusSession, completedSessions, playNotificationSound]);
 
   const ringColor = mode === 'work' ? 'var(--ring-work)' : 'var(--ring-break)';
 
