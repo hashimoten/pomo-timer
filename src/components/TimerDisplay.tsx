@@ -43,7 +43,6 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
                         width="300"
                         height="300"
                         viewBox="0 0 300 300"
-                        className="transform -rotate-90"
                     >
                         {/* Background Ring */}
                         <circle
@@ -53,6 +52,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
                             stroke="var(--ring-bg)"
                             strokeWidth="8"
                             fill="transparent"
+                            className="origin-center -rotate-90"
                         />
                         {/* Progress Ring */}
                         <circle
@@ -65,6 +65,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
                             strokeDasharray={circumference}
                             strokeDashoffset={strokeDashoffset}
                             strokeLinecap="round"
+                            className="origin-center -rotate-90"
                             style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s ease' }}
                         />
                         {/* Text Content */}
