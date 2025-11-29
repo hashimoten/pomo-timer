@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Settings, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TimerDisplay } from './components/TimerDisplay';
@@ -14,6 +14,8 @@ const SETTINGS_STORAGE_KEY = 'pomodoro_settings';
 const DEFAULT_SETTINGS: AppSettings = {
   workDuration: 25,
   breakDuration: 5,
+  longBreakDuration: 15,
+  sessionsUntilLongBreak: 4,
   theme: 'light',
   autoStart: false,
   soundType: 'bell',
@@ -83,6 +85,7 @@ function App() {
   const [timerState, setTimerState] = useState<TimerState>('idle');
   const [mode, setMode] = useState<TimerMode>('work');
   const [sessionStart, setSessionStart] = useState<Date | null>(null);
+  const [completedSessions, setCompletedSessions] = useState(0);
 
   // History State
   const [history, setHistory] = useState<FocusSession[]>(() => {
@@ -119,7 +122,27 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('General');
 
   // Derived State
-  const currentTotalTime = mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
+  const currentTotalTime = useMemo(() => {
+    if (mode === 'work') return settings.workDuration * 60;
+    // Check if it's a long break
+    // Logic: If we just finished a work session that made the count a multiple of sessionsUntilLongBreak,
+    // then the NEXT break is long.
+    // However, 'mode' is already 'break'. We need to know if THIS break is long.
+    // We can rely on how we switched mode.
+    // Simplified: We set the duration when we switch mode.
+    // So we don't need to calculate it here based on count, we should trust timeLeft or a stored duration.
+    // But for the progress bar, we need the total time of the CURRENT session.
+    // Let's store the current session duration in a ref or state to be safe, OR recalculate it.
+    // For now, let's assume standard break unless we track it.
+    // Actually, we can check if (completedSessions % settings.sessionsUntilLongBreak === 0) AND mode === 'break'.
+    // But completedSessions increments AFTER work.
+    // So if we have 4 sessions, and we are in break, it means we just finished 4th. So yes.
+    if (completedSessions > 0 && completedSessions % settings.sessionsUntilLongBreak === 0) {
+      return settings.longBreakDuration * 60;
+    }
+    return settings.breakDuration * 60;
+  }, [mode, settings.workDuration, settings.breakDuration, settings.longBreakDuration, settings.sessionsUntilLongBreak, completedSessions]);
+
   const progress = Math.min((currentTotalTime - timeLeft) / currentTotalTime, 1);
   const totalFocusMinutes = history.reduce((sum, item) => sum + item.minutes, 0);
 
@@ -146,17 +169,26 @@ function App() {
 
   // Timer Logic
   const resetTimer = useCallback(() => {
-    setTimeLeft(mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60);
+    // Determine duration based on current mode and session count
+    let duration = settings.workDuration * 60;
+    if (mode === 'break') {
+      if (completedSessions > 0 && completedSessions % settings.sessionsUntilLongBreak === 0) {
+        duration = settings.longBreakDuration * 60;
+      } else {
+        duration = settings.breakDuration * 60;
+      }
+    }
+    setTimeLeft(duration);
     setTimerState('idle');
     setSessionStart(null);
-  }, [mode, settings.workDuration, settings.breakDuration]);
+  }, [mode, settings, completedSessions]);
 
   // When settings change, if timer is idle, update the time left immediately
   useEffect(() => {
     if (timerState === 'idle') {
-      setTimeLeft(mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60);
+      resetTimer();
     }
-  }, [settings.workDuration, settings.breakDuration, mode, timerState]);
+  }, [settings.workDuration, settings.breakDuration, settings.longBreakDuration, mode, timerState, resetTimer]);
 
   const saveFocusSession = useCallback((start: Date, end: Date, minutes: number) => {
     const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
@@ -190,26 +222,42 @@ function App() {
 
   const finishAndLog = useCallback(() => {
     if (mode !== 'work') {
-      resetTimer();
+      // Finished break
+      setMode('work');
+      setTimeLeft(settings.workDuration * 60);
+      setTimerState('idle');
       return;
     }
+
+    // Finished Work
     const totalSeconds = settings.workDuration * 60;
     const elapsedSeconds = totalSeconds - timeLeft;
     const elapsedMinutes = Math.floor(elapsedSeconds / 60);
 
-    if (elapsedMinutes < 1) {
-      resetTimer();
-      return;
+    if (elapsedMinutes >= 1) {
+      const end = new Date();
+      const start = sessionStart ?? new Date(end.getTime() - elapsedSeconds * 1000);
+      saveFocusSession(start, end, elapsedMinutes);
+
+      // Increment completed sessions
+      const newCompletedSessions = completedSessions + 1;
+      setCompletedSessions(newCompletedSessions);
+
+      // Determine next mode and duration
+      setMode('break');
+      if (newCompletedSessions % settings.sessionsUntilLongBreak === 0) {
+        setTimeLeft(settings.longBreakDuration * 60);
+      } else {
+        setTimeLeft(settings.breakDuration * 60);
+      }
+    } else {
+      // Too short, just reset
+      setTimeLeft(settings.workDuration * 60);
     }
 
-    const end = new Date();
-    const start = sessionStart ?? new Date(end.getTime() - elapsedSeconds * 1000);
-
-    saveFocusSession(start, end, elapsedMinutes);
     setSessionStart(null);
-    setTimeLeft(settings.workDuration * 60);
     setTimerState('idle');
-  }, [mode, timeLeft, sessionStart, resetTimer, saveFocusSession, settings.workDuration]);
+  }, [mode, timeLeft, sessionStart, saveFocusSession, settings, completedSessions]);
 
   const toggleTimer = useCallback(() => {
     setTimerState(prev => {
@@ -224,13 +272,12 @@ function App() {
   // Keyboard Shortcuts Effect
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent shortcuts if user is typing in an input (e.g. settings)
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
       if (e.code === 'Space') {
-        e.preventDefault(); // Prevent scrolling
+        e.preventDefault();
         toggleTimer();
       } else if (e.code === 'KeyR') {
         resetTimer();
@@ -247,7 +294,17 @@ function App() {
 
   const switchMode = useCallback((newMode: TimerMode, startImmediately = false) => {
     setMode(newMode);
-    setTimeLeft(newMode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60);
+    let duration = 0;
+    if (newMode === 'work') {
+      duration = settings.workDuration * 60;
+    } else {
+      // If manually switching to break, assume short break unless we want to be smart.
+      // Let's stick to short break for manual switch for simplicity, or check session count.
+      // If we manually switch, maybe we shouldn't increment session count?
+      // Let's just use breakDuration for manual switch.
+      duration = settings.breakDuration * 60;
+    }
+    setTimeLeft(duration);
     setTimerState(startImmediately ? 'running' : 'idle');
   }, [settings.workDuration, settings.breakDuration]);
 
@@ -258,24 +315,50 @@ function App() {
       interval = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            // Play notification sound
+            // Timer Finished
             playNotificationSound(settings.soundType);
 
-            if (mode === 'work' && sessionStart) {
-              const end = new Date();
-              const durationMinutes = settings.workDuration;
-              saveFocusSession(sessionStart, end, durationMinutes);
-              setSessionStart(null);
-            }
-            const newMode = mode === 'work' ? 'break' : 'work';
+            if (mode === 'work') {
+              // Work Session Finished
+              if (sessionStart) {
+                const end = new Date();
+                const durationMinutes = settings.workDuration;
+                saveFocusSession(sessionStart, end, durationMinutes);
+                setSessionStart(null);
+              }
 
-            if (settings.autoStart) {
-              switchMode(newMode, true);
-              // Return the new duration immediately to avoid a flicker or 0 state
-              return newMode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
+              const newCompletedSessions = completedSessions + 1;
+              setCompletedSessions(newCompletedSessions);
+
+              const newMode = 'break';
+              setMode(newMode);
+
+              let nextDuration = settings.breakDuration * 60;
+              if (newCompletedSessions % settings.sessionsUntilLongBreak === 0) {
+                nextDuration = settings.longBreakDuration * 60;
+              }
+
+              if (settings.autoStart) {
+                setTimerState('running');
+                // We need to return the new duration here
+                return nextDuration;
+              } else {
+                setTimerState('idle');
+                return nextDuration; // Display the next duration
+              }
             } else {
-              switchMode(newMode, false);
-              return 0;
+              // Break Finished
+              setMode('work');
+              const nextDuration = settings.workDuration * 60;
+
+              if (settings.autoStart) {
+                setTimerState('running');
+                setSessionStart(new Date()); // Start new session tracking
+                return nextDuration;
+              } else {
+                setTimerState('idle');
+                return nextDuration;
+              }
             }
           }
           return prev - 1;
@@ -286,7 +369,7 @@ function App() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [timerState, mode, switchMode, sessionStart, settings.workDuration, settings.breakDuration, saveFocusSession, settings.autoStart]);
+  }, [timerState, mode, sessionStart, settings, saveFocusSession, completedSessions]);
 
   const ringColor = mode === 'work' ? 'var(--ring-work)' : 'var(--ring-break)';
 
@@ -303,6 +386,72 @@ function App() {
     }));
   }, [history]);
 
+  // Data Backup Handlers
+  const handleExportHistory = () => {
+    const headers = ['Date', 'Range', 'Minutes', 'Category', 'ISO Date'];
+    const rows = history.map(item => [
+      item.date,
+      item.range,
+      item.minutes,
+      item.category,
+      item.isoDate
+    ].map(val => `"${val}"`).join(','));
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'pomodoro_history.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportHistory = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      if (!content) return;
+
+      try {
+        // Simple CSV parser
+        const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+        if (lines.length < 2) return; // Header + 1 row
+
+        const newHistory: FocusSession[] = [];
+        // Skip header
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i];
+          // Handle quotes if strictly needed, but simple split for now
+          // A robust CSV parser is better, but this is a simple implementation
+          const parts = line.split(',').map(p => p.replace(/^"|"$/g, ''));
+
+          if (parts.length >= 5) {
+            newHistory.push({
+              id: Math.random().toString(36).substr(2, 9),
+              date: parts[0],
+              range: parts[1],
+              minutes: Number(parts[2]),
+              category: parts[3],
+              isoDate: parts[4],
+            });
+          }
+        }
+
+        // Merge with existing history (avoid duplicates based on some criteria if needed, but here we just append or replace?)
+        // User asked to "integrate or overwrite". Let's append for safety, or maybe replace?
+        // "内容を解析して現在の history に統合（または上書き）" -> Let's merge.
+        setHistory(prev => [...newHistory, ...prev]);
+        alert(`Successfully imported ${newHistory.length} sessions.`);
+      } catch (err) {
+        console.error('Failed to parse CSV', err);
+        alert('Failed to parse the file. Please ensure it is a valid CSV.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="layout-main">
       {/* Settings Modal */}
@@ -312,6 +461,8 @@ function App() {
         settings={settings}
         onUpdateSettings={setSettings}
         onPlaySound={playNotificationSound}
+        onExportHistory={handleExportHistory}
+        onImportHistory={handleImportHistory}
       />
 
       {/* Left: timer card */}
@@ -343,7 +494,7 @@ function App() {
                   onClick={() => switchMode('work')}
                   className={`mode-pill ${mode === 'work' ? 'mode-pill--active' : ''}`}
                 >
-                  Work
+                  Focus
                 </button>
                 <button
                   onClick={() => switchMode('break')}
@@ -374,6 +525,8 @@ function App() {
             timerState={timerState}
             progress={progress}
             ringColor={ringColor}
+            sessionsUntilLongBreak={settings.sessionsUntilLongBreak}
+            completedSessions={completedSessions}
           />
 
           <Controls

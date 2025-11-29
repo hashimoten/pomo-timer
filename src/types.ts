@@ -13,6 +13,8 @@ export type FocusSession = {
 export type AppSettings = {
     workDuration: number; // minutes
     breakDuration: number; // minutes
+    longBreakDuration: number; // minutes
+    sessionsUntilLongBreak: number;
     theme: 'light' | 'dark';
     autoStart: boolean;
     soundType: string;
