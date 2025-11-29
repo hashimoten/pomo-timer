@@ -45,7 +45,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                     {history.length === 0 ? (
                         <div className="history-empty">No completed focus sessions yet.</div>
                     ) : (
-                        <ul className="history-list">
+                        <ul className="history-list custom-scrollbar">
                             {history.map(item => (
                                 <li key={item.id} className="history-item">
                                     <div className="history-row">
