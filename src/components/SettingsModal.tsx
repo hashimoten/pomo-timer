@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { X, Volume2, Download, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppSettings } from '../types';
+import { AVAILABLE_SOUNDS } from '../utils/sounds';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -12,12 +13,6 @@ interface SettingsModalProps {
     onExportHistory: () => void;
     onImportHistory: (file: File) => void;
 }
-
-const SOUNDS = [
-    { id: 'bell', name: '🔔 Classic Bell' },
-    { id: 'digital', name: '🤖 Digital Beep' },
-    { id: 'bird', name: '🐦 Chirp (Simple)' },
-];
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
     isOpen,
@@ -155,7 +150,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                             onChange={(e) => onUpdateSettings({ ...settings, soundType: e.target.value })}
                                             className="setting-input appearance-none flex-1"
                                         >
-                                            {SOUNDS.map(sound => (
+                                            {AVAILABLE_SOUNDS.map(sound => (
                                                 <option key={sound.id} value={sound.id}>
                                                     {sound.name}
                                                 </option>

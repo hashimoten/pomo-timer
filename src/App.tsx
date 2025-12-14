@@ -6,6 +6,7 @@ import { Controls } from './components/Controls';
 import { SettingsModal } from './components/SettingsModal';
 import { HistoryPanel } from './components/HistoryPanel';
 import { AppSettings, FocusSession, TimerMode, TimerState } from './types';
+import { AVAILABLE_SOUNDS } from './utils/sounds';
 
 // Constants
 const HISTORY_STORAGE_KEY = 'pomodoro_focus_history';
@@ -64,6 +65,24 @@ function App() {
     // Resume if suspended (browser autoplay policy)
     if (ctx.state === 'suspended') {
       await ctx.resume();
+    }
+
+    // Check for custom file sound
+    const soundOption = AVAILABLE_SOUNDS.find(s => s.id === type);
+    if (soundOption?.type === 'file' && soundOption.url) {
+      try {
+        const response = await fetch(soundOption.url);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(ctx.destination);
+        source.start();
+      } catch (e) {
+        console.error('Failed to play custom sound', e);
+      }
+      return;
     }
 
     const osc = ctx.createOscillator();
