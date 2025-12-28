@@ -9,7 +9,7 @@ interface ControlsProps {
     currentTotalTime: number;
     onToggle: () => void;
     onReset: () => void;
-    onFinish: () => void;
+    onFinish: (manual?: boolean) => void;
 }
 
 export const Controls: React.FC<ControlsProps> = ({
@@ -50,7 +50,7 @@ export const Controls: React.FC<ControlsProps> = ({
 
             {timerState !== 'idle' && (
                 <button
-                    onClick={onFinish}
+                    onClick={() => onFinish(true)}
                     className="btn btn-secondary text-emerald-600"
                 >
                     Done

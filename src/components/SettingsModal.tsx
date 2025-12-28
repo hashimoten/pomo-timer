@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { X, Volume2, Download, Upload } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { X, Volume2, Download, Upload, Plus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppSettings } from '../types';
 import { AVAILABLE_SOUNDS } from '../utils/sounds';
@@ -24,6 +24,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onImportHistory,
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [newCategory, setNewCategory] = useState('');
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -34,6 +35,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         if (e.target) {
             e.target.value = '';
         }
+    };
+
+    const handleAddCategory = () => {
+        if (!newCategory.trim()) return;
+        if (settings.categories.includes(newCategory.trim())) return;
+
+        onUpdateSettings({
+            ...settings,
+            categories: [...settings.categories, newCategory.trim()]
+        });
+        setNewCategory('');
+    };
+
+    const handleRemoveCategory = (categoryToRemove: string) => {
+        onUpdateSettings({
+            ...settings,
+            categories: settings.categories.filter(c => c !== categoryToRemove)
+        });
     };
 
     return (
@@ -125,6 +144,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                             <hr className="border-[#e0e5ec] dark:border-[#2d3748]" />
 
+                            {/* Categories Section */}
+                            <div className="flex flex-col gap-4">
+                                <h3 className="text-sm font-semibold text-[#7a8ba3] uppercase tracking-wider">Categories</h3>
+
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newCategory}
+                                        onChange={(e) => setNewCategory(e.target.value)}
+                                        placeholder="New Category"
+                                        className="flex-1 setting-input px-3 py-2 rounded-lg"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+                                    />
+                                    <button
+                                        onClick={handleAddCategory}
+                                        className="p-2 rounded-lg bg-[var(--text-accent)] text-white hover:opacity-90 transition-opacity"
+                                    >
+                                        <Plus size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {settings.categories.map((cat) => (
+                                        <div
+                                            key={cat}
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--bg-element)] shadow-sm text-[var(--text-primary)]"
+                                            style={{ boxShadow: '2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light)' }}
+                                        >
+                                            <span>{cat}</span>
+                                            <button
+                                                onClick={() => handleRemoveCategory(cat)}
+                                                className="text-[#7a8ba3] hover:text-red-500 transition-colors"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <hr className="border-[#e0e5ec] dark:border-[#2d3748]" />
+
                             {/* Behavior Section */}
                             <div className="flex flex-col gap-4">
                                 <h3 className="text-sm font-semibold text-[#7a8ba3] uppercase tracking-wider">Behavior</h3>
@@ -147,7 +208,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     <div className="flex items-center gap-2">
                                         <select
                                             value={settings.soundType}
-                                            onChange={(e) => onUpdateSettings({ ...settings, soundType: e.target.value })}
+                                            onChange={(e) => onUpdateSettings({ ...settings, soundType: e.target.value as any })}
                                             className="setting-input appearance-none flex-1"
                                         >
                                             {AVAILABLE_SOUNDS.map(sound => (

@@ -15,7 +15,19 @@ export type AppSettings = {
     breakDuration: number; // minutes
     longBreakDuration: number; // minutes
     sessionsUntilLongBreak: number;
-    theme: 'light' | 'dark';
+    theme: 'light' | 'dark' | 'system';
     autoStart: boolean;
-    soundType: string;
+    soundType: 'bell' | 'digital' | 'bird' | 'custom'; // Added 'custom'
+    customSoundUrl?: string; // Optional URL for custom sound
+    categories: string[];
 };
+
+export interface Task {
+    id: string;
+    title: string;
+    completed: boolean;
+    estimatedPomodoros: number;
+    completedPomodoros: number;
+    isActive: boolean;
+    createdAt: number;
+}

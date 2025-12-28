@@ -10,6 +10,7 @@ interface TimerDisplayProps {
     ringColor: string;
     sessionsUntilLongBreak: number;
     completedSessions: number;
+    activeTaskTitle?: string;
 }
 
 export const TimerDisplay: React.FC<TimerDisplayProps> = ({
@@ -20,8 +21,9 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
     ringColor,
     sessionsUntilLongBreak,
     completedSessions,
+    activeTaskTitle,
 }) => {
-    const radius = 120;
+    const radius = 110;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - progress * circumference;
 
@@ -40,14 +42,14 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
             >
                 <div className="timer-ring">
                     <svg
-                        width="300"
-                        height="300"
-                        viewBox="0 0 300 300"
+                        width="280"
+                        height="280"
+                        viewBox="0 0 280 280"
                     >
                         {/* Background Ring */}
                         <circle
-                            cx="150"
-                            cy="150"
+                            cx="140"
+                            cy="140"
                             r={radius}
                             stroke="var(--ring-bg)"
                             strokeWidth="8"
@@ -56,8 +58,8 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
                         />
                         {/* Progress Ring */}
                         <circle
-                            cx="150"
-                            cy="150"
+                            cx="140"
+                            cy="140"
                             r={radius}
                             stroke={ringColor}
                             strokeWidth="8"
@@ -69,22 +71,24 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
                             style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s ease' }}
                         />
                         {/* Text Content */}
-                        <foreignObject x="40" y="40" width="220" height="220">
+                        <foreignObject x="30" y="30" width="220" height="220">
                             <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
                                 <div className="timer-caption">
                                     {mode === 'work' ? 'Focus window' : 'Break window'}
                                 </div>
                                 <div className="timer-time">{formatTime(timeLeft)}</div>
-                                <div className="timer-subcopy">
+                                <div className="timer-subcopy truncate max-w-[180px] px-2">
                                     {timerState === 'idle'
-                                        ? 'Ready to start?'
-                                        : timerState === 'paused'
-                                            ? 'Timer paused'
-                                            : 'Stay focused'}
+                                        ? (activeTaskTitle ? activeTaskTitle : 'Ready?')
+                                        : (activeTaskTitle ? activeTaskTitle : (timerState === 'paused' ? 'Paused' : 'Focus'))}
                                 </div>
-                                {mode === 'work' && (
+                                {mode === 'work' ? (
                                     <div className="text-xs text-[#7a8ba3] mt-1 font-medium">
-                                        Session {(completedSessions % sessionsUntilLongBreak) + 1} / {sessionsUntilLongBreak}
+                                        {completedSessions % sessionsUntilLongBreak + 1} / {sessionsUntilLongBreak}
+                                    </div>
+                                ) : (
+                                    <div className="text-xs mt-1 font-medium invisible">
+                                        0 / 0
                                     </div>
                                 )}
                             </div>
