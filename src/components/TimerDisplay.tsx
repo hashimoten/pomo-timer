@@ -70,7 +70,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
                             style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s ease' }}
                         />
                         {/* Text Content */}
-                        <foreignObject x="30" y="30" width="220" height="220">
+                        <foreignObject x="20" y="30" width="240" height="220">
                             <div className="flex flex-col items-center justify-center h-full gap-2 text-center">
                                 <div className="timer-caption">
                                     {mode === 'work' ? 'Focus window' : 'Break window'}

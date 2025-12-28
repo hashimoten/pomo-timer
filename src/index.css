@@ -128,7 +128,7 @@ body {
 }
 
 .timer-time {
-  @apply w-full text-center px-4 text-5xl sm:text-6xl font-semibold tracking-[0.18em];
+  @apply w-full text-center px-4 text-5xl font-semibold tracking-[0.18em];
   color: var(--text-primary);
 }
 
