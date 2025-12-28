@@ -32,6 +32,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
+                    options: {
+                        emailRedirectTo: window.location.origin,
+                    },
                 });
                 if (error) throw error;
                 alert('Confirmation email sent! Please check your inbox.');
