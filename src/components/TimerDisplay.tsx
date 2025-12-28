@@ -42,8 +42,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
             >
                 <div className="timer-ring">
                     <svg
-                        width="280"
-                        height="280"
+                        className="w-full h-full"
                         viewBox="0 0 280 280"
                     >
                         {/* Background Ring */}

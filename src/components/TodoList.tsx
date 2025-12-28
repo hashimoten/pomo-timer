@@ -42,17 +42,17 @@ export const TodoList: React.FC<TodoListProps> = ({
     return (
         <div className="flex flex-col h-full">
             <form onSubmit={handleSubmit} className="mb-6">
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full">
                     <input
                         type="text"
                         value={newTaskTitle}
                         onChange={(e) => setNewTaskTitle(e.target.value)}
                         placeholder="Add a new task..."
-                        className="flex-1 bg-transparent border-b-2 border-gray-200 dark:border-gray-700 px-2 py-2 outline-none focus:border-[var(--text-accent)] transition-colors placeholder-gray-400"
+                        className="flex-1 min-w-0 bg-transparent border-b-2 border-gray-200 dark:border-gray-700 px-2 py-2 outline-none focus:border-[var(--text-accent)] transition-colors placeholder-gray-400"
                     />
                     <button
                         type="submit"
-                        className="p-2 bg-[var(--text-accent)] text-white rounded-xl shadow-lg hover:opacity-90 transition-opacity"
+                        className="shrink-0 p-2 bg-[var(--text-accent)] text-white rounded-xl shadow-lg hover:opacity-90 transition-opacity"
                         disabled={!newTaskTitle.trim()}
                     >
                         <Plus size={20} />

@@ -89,8 +89,8 @@ export const TimerPage = () => {
                     </div>
 
                     {/* Timer Circle Container */}
-                    <div className="relative p-10 rounded-full" style={{ boxShadow: 'inset 20px 20px 40px var(--shadow-dark), inset -20px -20px 40px var(--shadow-light)' }}>
-                        <div className="scale-110">
+                    <div className="relative p-4 md:p-10 rounded-full" style={{ boxShadow: 'inset 20px 20px 40px var(--shadow-dark), inset -20px -20px 40px var(--shadow-light)' }}>
+                        <div className="w-52 h-52 md:w-[280px] md:h-[280px] md:scale-110">
                             <TimerDisplay
                                 mode={mode}
                                 timeLeft={timeLeft}

@@ -7,9 +7,11 @@ import { motion } from 'framer-motion';
 
 interface SidebarProps {
     onSignInClick?: () => void;
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onSignInClick }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onSignInClick, isOpen = false, onClose }) => {
     const { user, signOut } = useAuth();
     const { timeLeft, mode, timerState, progress } = useTimer();
 
@@ -24,13 +26,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignInClick }) => {
     ];
 
     return (
-        <aside className="w-64 h-screen bg-[var(--bg-card)] border-r border-[var(--border-color)] flex flex-col fixed left-0 top-0 z-20 transition-all duration-300">
+        <aside
+            className={`
+                w-64 h-[100dvh] bg-[var(--bg-card)] border-r border-[var(--border-color)] 
+                flex flex-col fixed left-0 top-0 z-40 transition-transform duration-300 
+                ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}
+        >
             {/* Logo / Header */}
-            <div className="p-6 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--text-accent)] to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                    P
+            <div className="p-6 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--text-accent)] to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                        P
+                    </div>
+                    <h1 className="text-xl font-bold tracking-tight text-[var(--text-main)]">Pomodoro</h1>
                 </div>
-                <h1 className="text-xl font-bold tracking-tight text-[var(--text-main)]">Pomodoro</h1>
             </div>
 
             {/* Navigation */}
@@ -39,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onSignInClick }) => {
                     <NavLink
                         key={item.path}
                         to={item.path}
+                        onClick={() => onClose?.()}
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
                                 ? 'bg-[var(--bg-hover)] text-[var(--text-accent)] font-medium shadow-sm'
